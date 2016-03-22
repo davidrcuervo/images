@@ -13,5 +13,8 @@
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
+	<classpathentry kind="lib" path="/home/myself/Downloads/eclipselink/jlib/eclipselink.jar"/>
+	<classpathentry kind="lib" path="/home/myself/Downloads/eclipselink/jlib/jpa/javax.persistence_2.1.0.v201304241213.jar"/>
+	<classpathentry kind="lib" path="/home/myself/Downloads/postgresql-9.4-1206-jdbc42.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
