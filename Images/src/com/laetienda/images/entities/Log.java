@@ -89,6 +89,10 @@ public class Log implements Serializable {
 
 	public void setLog(String log){
 		
+		if(log == null){
+			log = "Unknown error message";
+		}
+		
 		if(log.length() > 254){
 			this.log = log.substring(0, 254);
 		}else{

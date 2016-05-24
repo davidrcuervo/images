@@ -35,10 +35,10 @@ public class LoadUtilities implements ServletContextListener {
     }	
     
     private void initializeLogger(ServletContext sc){
-    	//String logsFile = sc.getRealPath((String)sc.getInitParameter("logs-file"));
+    	String logsFile = sc.getRealPath((String)sc.getInitParameter("logs-file"));
     	
     	log = new Logger();
-    	//log.setFile(logsFile);
+    	log.setFile(logsFile);
     	log.debug("Logs file is: " + log.getFilePath());
     	
     	sc.setAttribute("Logger", log);
@@ -53,7 +53,7 @@ public class LoadUtilities implements ServletContextListener {
     	try{
     		emfactory = Persistence.createEntityManagerFactory(persistenceUnitName);
     		db = new DB(log, emfactory);
-    		//log.setDatabaseConnection(db);
+    		log.setDatabaseConnection(db);
     		    		
     		log.debug("The application has been succesfully conected to the database");
     		

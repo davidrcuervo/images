@@ -6,9 +6,9 @@
 		<class>com.laetienda.images.entities.Setting</class>
 		<class>com.laetienda.images.entities.User</class>
 		<properties>
-			<property name="javax.persistence.jdbc.url" value="jdbc:postgresql://devdb.la-etienda.lan:5432/images"/>
+			<property name="javax.persistence.jdbc.url" value="jdbc:postgresql://db.la-etienda.lan:5432/images"/>
 			<property name="javax.persistence.jdbc.user" value="images"/>
-			<property name="javax.persistence.jdbc.password" value="www.myself.com"/>
+			<property name="javax.persistence.jdbc.password" value="TctV484jfdaFx5vb"/>
 			<property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver"/>
 		</properties>
 	</persistence-unit>

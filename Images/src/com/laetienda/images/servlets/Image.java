@@ -31,9 +31,10 @@ public class Image extends HttpServlet {
 		log.info("Executing Image servlet.");
 		
 		File imageFolder = (File)request.getServletContext().getAttribute("imageFolder");
-		String imageName = request.getPathInfo().substring(request.getPathInfo().lastIndexOf("/") + 1);
+		String imageName = "noExit.file";
 		
 		try{
+			imageName = request.getPathInfo().substring(request.getPathInfo().lastIndexOf("/") + 1);
 			image = new Imagen(new File(imageFolder.getAbsolutePath() + "/" + imageName), log);
 			
 			String mimeType = request.getServletContext().getMimeType(image.getName());
@@ -58,7 +59,7 @@ public class Image extends HttpServlet {
 				ImageIO.write(image.getImage(), image.getExtension(), out);
 			}	
 		}catch (Exception ex){
-			log.error(ex.getMessage().toString());
+			log.error(ex.getMessage() + " $filePath: " + imageFolder.getAbsolutePath() + "/" + imageName);
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
 		}
 	}
