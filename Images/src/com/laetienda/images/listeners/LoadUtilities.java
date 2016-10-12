@@ -10,6 +10,7 @@ import javax.servlet.ServletContextListener;
 
 import com.laetienda.images.utilities.Logger;
 import com.laetienda.images.utilities.DB;
+import com.laetienda.images.utilities.DbTransaction;
 
 
 public class LoadUtilities implements ServletContextListener {
@@ -35,14 +36,10 @@ public class LoadUtilities implements ServletContextListener {
     }	
     
     private void initializeLogger(ServletContext sc){
-    	String logsFile = sc.getRealPath((String)sc.getInitParameter("logs-file"));
+    	//String logsFile = sc.getRealPath((String)sc.getInitParameter("logs-file"));
     	
     	log = new Logger();
-    	log.setFile(logsFile);
-    	log.debug("Logs file is: " + log.getFilePath());
-    	
-    	sc.setAttribute("Logger", log);
-    	log.debug("Logger has been initialized");
+   
     }
     
     private void intializeDB(ServletContext sc){
@@ -52,8 +49,8 @@ public class LoadUtilities implements ServletContextListener {
     	
     	try{
     		emfactory = Persistence.createEntityManagerFactory(persistenceUnitName);
-    		db = new DB(log, emfactory);
-    		log.setDatabaseConnection(db);
+    		db = new DB(emfactory, log);
+    		//log.setDatabaseConnection(db);
     		    		
     		log.debug("The application has been succesfully conected to the database");
     		
@@ -71,20 +68,29 @@ public class LoadUtilities implements ServletContextListener {
     private void intializeImageFolder(ServletContext sc){
     	log.info("Initiliazing image folder");
     	
-    	String temp = (String)db.getSetting("images_path").getValue();
-    	imageFolder = new File(temp);
-    	log.debug("$images_path: " + temp);
+    	DbTransaction trans = new DbTransaction(db.getNewEm(), log); 
     	
-    	if(imageFolder.exists() && imageFolder.isDirectory() && imageFolder.canRead()){
-    		sc.setAttribute("imageFolder", imageFolder);
-    	}else{
-    		log.emergency("Image folder does not exist, or it is not a directory or can't be read");
-    		log.debug("Image fotder is: " + imageFolder.getPath());
-    		log.debug("Does folder exists? " + (imageFolder.getAbsoluteFile().exists() ? "true" : "false"));
-    		log.debug("is folder a directory? " + (imageFolder.isDirectory() ? "true" : "false"));
-    		log.debug("can folder be read? " + (imageFolder.canRead() ? "true" : "false"));
-    		
-    		System.exit(1);
-    	}
+    	try{
+    		String temp = trans.getSetting("images_path").getValue();
+	    	imageFolder = new File(temp);
+	    	log.debug("$images_path: " + temp);
+	    	
+	    	if(imageFolder.exists() && imageFolder.isDirectory() && imageFolder.canRead()){
+	    		sc.setAttribute("imageFolder", imageFolder);
+	    	}else{
+	    		log.emergency("Image folder does not exist, or it is not a directory or can't be read");
+	    		log.debug("Image fotder is: " + imageFolder.getPath());
+	    		log.debug("Does folder exists? " + (imageFolder.getAbsoluteFile().exists() ? "true" : "false"));
+	    		log.debug("is folder a directory? " + (imageFolder.isDirectory() ? "true" : "false"));
+	    		log.debug("can folder be read? " + (imageFolder.canRead() ? "true" : "false"));
+	    		
+	    		System.exit(1);
+	    	}
+	    }catch (Exception ex){
+	    	log.critical(ex.getClass().getName());
+	    	log.critical(ex.getMessage());
+	    	ex.printStackTrace();
+	    	System.exit(1);
+	    }
     }
 }

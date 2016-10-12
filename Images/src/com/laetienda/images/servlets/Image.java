@@ -22,12 +22,16 @@ public class Image extends HttpServlet {
 	//private DB db;
        
 	public void init(ServletConfig config) throws ServletException {
-		log = (Logger)config.getServletContext().getAttribute("Logger");
-		//db = (DB)config.getServletContext().getAttribute("db");
-		
+		//log = (Logger)config.getServletContext().getAttribute("Logger");
+	}
+	
+	private void buildServlet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		log = new Logger();
 	}
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	protected synchronized void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		buildServlet(request, response);
+		
 		log.info("Executing Image servlet.");
 		
 		File imageFolder = (File)request.getServletContext().getAttribute("imageFolder");

@@ -12,6 +12,7 @@ import javax.persistence.PersistenceException;
 
 import com.laetienda.images.entities.Log;
 import com.laetienda.images.entities.User;
+import com.laetienda.images.entities.Setting;
 
 
 public class Logger {
@@ -26,14 +27,14 @@ public class Logger {
 	private int tempLevel;
 	private User user;
 		
-	private DB db;
+	private DbTransaction trans;
 	private Log message;
 	
 	public Logger(){
 		this.setLevel(DEFAULT_LEVEL);
 		this.file = null;
 		this.message = new Log();
-		this.db = null;
+		this.trans = null;
 		
 		user = new User();
 		user.setUsername("Logger");
@@ -90,10 +91,23 @@ public class Logger {
 		}
 	}
 	
-	public void setDatabaseConnection(DB db){
+	public void setDb(EntityManager em){
 		
-		this.db = db;
-		this.message.setUser(db.getUser(DEFAULT_USER));
+		this.trans = new DbTransaction(em, this);
+		
+		try{
+			Setting logger = trans.getSetting("default_logger_user");
+			User logUser = trans.getUserByUsername(logger.getValue());
+			message.setUser(logUser);
+		}catch (Exception ex){
+			this.critical("The user for logger has not been found");
+		}finally{
+			trans.getEm().clear();
+		}
+	}
+	
+	public EntityManager getEm(){
+		return trans.getEm();
 	}
 	
 	//This method is like the table of contents to save the log.
@@ -105,13 +119,13 @@ public class Logger {
 		this.message.setLevel(LEVELS[this.tempLevel]);
 		this.setClassDetails();
 		
-		if(this.db == null && this.level <= this.tempLevel){
+		if(trans == null && this.level <= this.tempLevel){
 			this.saveToFile();
 		}else{
 			try{
-				this.setFile(db.getSettingForLogger("logger_file").getValue());
-				this.setLevel(db.getSettingForLogger("logger_level").getValue());
-			}catch(IOException ex){
+				this.setFile(trans.getSetting("logger_file").getValue());
+				this.setLevel(trans.getSetting("logger_level").getValue());
+			}catch(Exception ex){
 				String temp = this.message.getLog();
 				this.message.setLog(temp + " ERROR: " + ex.getMessage());
 				
@@ -119,7 +133,7 @@ public class Logger {
 				String temp;
 				if(this.level <= this.tempLevel){
 					try{
-						EntityManager em = db.getEntityManagerForLogger();
+						EntityManager em = trans.getEm();
 						
 						try{
 							em.getTransaction().begin();
@@ -144,7 +158,7 @@ public class Logger {
 			
 						}finally{
 							em.clear();
-							em.close();
+							em.flush();
 						}
 						
 					}catch(IllegalStateException ex){
