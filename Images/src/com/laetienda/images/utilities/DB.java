@@ -17,7 +17,7 @@ public class DB {
     	this.ems = new ArrayList<EntityManager>();
     }
     
-    public void close(){
+    public synchronized void close(){
     	log.info("Closing database connection");
     	
     	for(EntityManager temp : getEms()){
@@ -34,10 +34,26 @@ public class DB {
     	return this.ems;
     }
     
-    public EntityManager getNewEm(){
+    public synchronized EntityManager getNewEm(){
     	
     	EntityManager em = emfactory.createEntityManager();
     	getEms().add(em);
     	return em;
+    }
+    
+    public synchronized void closeEm(EntityManager em){
+    	
+    	if(getEms().contains(em)){
+    		
+    		int index = getEms().indexOf(em);
+    		EntityManager temp = getEms().get(index);
+    		
+    		if(temp.isOpen()){
+    			temp.clear();
+    			temp.close();
+    		}
+    		
+    		getEms().remove(index);
+    	}
     }
 }

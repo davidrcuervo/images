@@ -26,7 +26,7 @@ public class Image extends HttpServlet {
 	}
 	
 	private void buildServlet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		log = new Logger();
+		log = (Logger)request.getAttribute("Logger");
 	}
 
 	protected synchronized void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

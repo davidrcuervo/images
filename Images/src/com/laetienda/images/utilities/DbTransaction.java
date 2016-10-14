@@ -1,6 +1,7 @@
 package com.laetienda.images.utilities;
 
 import javax.persistence.EntityManager;
+import javax.persistence.RollbackException;
 
 import com.laetienda.images.entities.Setting;
 import com.laetienda.images.entities.User;
@@ -8,11 +9,9 @@ import com.laetienda.images.entities.User;
 public class DbTransaction {
 	
 	private EntityManager em;
-	private Logger log;
-	
+		
 	public DbTransaction(EntityManager em, Logger log){
 		this.em = em;
-		this.log = log;
 	}
 	
 	public EntityManager getEm(){
@@ -54,5 +53,70 @@ public class DbTransaction {
     	return user;
 	}
 	
+	public boolean begin() throws Exception {
+		
+		boolean result = false;
+		
+		if(begin(em)){
+			result = true;
+		}
+		
+		return result;
+	}
 	
+	public boolean begin(EntityManager em) throws Exception {
+		
+		boolean result = false;
+		
+		try{
+			em.clear();
+			em.getTransaction().begin();
+			result = true;
+			
+		}catch(IllegalStateException ex){
+			em.clear();
+			throw ex;
+		}finally{
+			
+		}
+		
+		return result;
+	}
+	
+	public boolean save(Object entity) throws Exception {
+		boolean result = false;
+		
+		if(save(em, entity)){
+			result = true;
+		}
+		
+		return result;
+	}
+	
+	public boolean save(EntityManager em, Object entity) throws Exception {
+		boolean result = false;
+		
+		try{
+			em.persist(entity);
+			em.getTransaction().commit();
+			result = true;
+		}catch(IllegalStateException ex){
+			throw ex;
+		}catch(RollbackException ex){
+			
+			try{
+				em.getTransaction().rollback();
+			}catch(IllegalStateException e){
+				throw e;
+			}finally{
+				
+			}
+			throw ex;
+			
+		}finally{
+			em.clear();
+		}
+		
+		return result;
+	}
 }

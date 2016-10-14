@@ -6,9 +6,6 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import javax.persistence.EntityManager;
-import javax.persistence.RollbackException;
-
-import javax.persistence.PersistenceException;
 
 import com.laetienda.images.entities.Log;
 import com.laetienda.images.entities.User;
@@ -30,6 +27,16 @@ public class Logger {
 	private DbTransaction trans;
 	private Log message;
 	
+	/**
+	 * <p>Default settings when creating a Logger:<p>
+	 * <ul>
+	 * <li><b>User:</b> New user, with Logger as username</li>
+	 * <li><b>Log level:</b> Debug</li>
+	 * <li><b>File:</b> None, it will log everything on the console</li>
+	 * <li><b>Database:</b> None, Normally it will not be connected to the db.</li>
+	 * <li><b></b></li>
+	 * </ul>
+	 */
 	public Logger(){
 		this.setLevel(DEFAULT_LEVEL);
 		this.file = null;
@@ -97,8 +104,8 @@ public class Logger {
 		
 		try{
 			Setting logger = trans.getSetting("default_logger_user");
-			User logUser = trans.getUserByUsername(logger.getValue());
-			message.setUser(logUser);
+			user = trans.getUserByUsername(logger.getValue());
+			message.setUser(user);
 		}catch (Exception ex){
 			this.critical("The user for logger has not been found");
 		}finally{
@@ -115,6 +122,7 @@ public class Logger {
 	private void prePrintLog(String message, String logLevel){
 		
 		this.message.setLog(message);
+		this.message.setUser(this.user);
 		this.findTempLevel(logLevel);
 		this.message.setLevel(LEVELS[this.tempLevel]);
 		this.setClassDetails();
@@ -123,7 +131,7 @@ public class Logger {
 			this.saveToFile();
 		}else{
 			try{
-				this.setFile(trans.getSetting("logger_file").getValue());
+				//this.setFile(trans.getSetting("logger_file").getValue());
 				this.setLevel(trans.getSetting("logger_level").getValue());
 			}catch(Exception ex){
 				String temp = this.message.getLog();
@@ -132,39 +140,17 @@ public class Logger {
 			}finally{
 				String temp;
 				if(this.level <= this.tempLevel){
+					
 					try{
-						EntityManager em = trans.getEm();
-						
-						try{
-							em.getTransaction().begin();
-							em.persist(this.message);
-							em.getTransaction().commit();
-						}catch(IllegalStateException ex){
-							temp = this.message.getLog();
-							this.message.setLog(temp + " ERROR: " + "Not possible to save log in database. -> ERROR: " + ex.getMessage());
-							this.saveToFile();
-						}catch(RollbackException ex){
-							this.message.setLog(this.message.getLog() + " ERROR: " + "Not possible to save log in database. -> ERROR: " + ex.getMessage());
-							
-							try{
-								em.getTransaction().rollback();
-							}catch(IllegalStateException e){
-								this.message.setLog(this.message.getLog() + " ERROR: " + "Not possible to save log in database. -> ERROR: " + ex.getMessage());
-							}catch(PersistenceException e){
-								this.message.setLog(this.message.getLog() + " ERROR: " + "Not possible to save log in database. -> ERROR: " + ex.getMessage());
-							}finally{
-								this.saveToFile();
-							}
-			
-						}finally{
-							em.clear();
-							em.flush();
-						}
-						
-					}catch(IllegalStateException ex){
-						this.message.setLog(this.message.getLog() + " ERROR: " + "Entity manager has been closed. -> ERROR: " + ex.getMessage());
+						trans.begin();
+						trans.save(this.message);
+					}catch (Exception ex){
+						temp = this.message.getLog();
+						this.message.setLog(temp + " ERROR: " + "Not possible to save log in database. -> ERROR: " + ex.getMessage());
 						this.saveToFile();
-					}
+					}finally{
+						trans.getEm().clear();
+					}				
 				}
 			}
 		}
